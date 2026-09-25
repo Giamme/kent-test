@@ -1,0 +1,16 @@
+{
+  "name": "kent-test",
+  "owner": {
+    "name": "Giamme"
+  },
+  "metadata": {
+    "description": "Agent skills that keep AI-written tests honest."
+  },
+  "plugins": [
+    {
+      "name": "kent-test",
+      "source": ".",
+      "description": "Two agent skills that keep AI-written tests honest: test-gate checks every test before it lands, test-audit prunes and repairs existing suites with mutation proof."
+    }
+  ]
+}
