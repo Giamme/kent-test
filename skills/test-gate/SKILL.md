@@ -79,6 +79,14 @@ unless the test independently guards a real contract (see section 6).
   present. That asserts implementation text. The exception is when the string
   is the contract itself (a user-facing key, a path, wire bytes) and an
   internal rename would not break the test.
+- **Copy-coupled assertion**: asserting exact label, heading, button, or
+  message text (`getByText("Save changes")`, `toHaveTextContent`, text
+  snapshots) when the test is really checking that something renders or
+  behaves. It breaks on every wording change and catches nothing a role or
+  test-id query would not. Find the element by role, test id, or a loose
+  accessible-name match, and assert the behavior (the click leads to the saved
+  state), not the words. Keep exact text only when the copy is itself the
+  contract (see section 6).
 - **Call-shape tests**: asserting which internal function was called with
   which arguments when the outcome is observable at the boundary.
 - **Duplicate coverage**: the same scenario is already asserted elsewhere at
@@ -145,8 +153,9 @@ Judge a test by its assertions, not its name.
 
 Do not over-prune. Keep tests that independently guard a public API, protocol
 or wire format, persistence or migration, security, config defaults, documented
-limits, user-facing text that is a contract, or ordering when order is
-observable. "Looks like implementation", "static", and "slow" are not reasons
+limits, user-facing text that is a contract (legal or compliance wording, a
+localization key, an error code or message consumers match on; not an ordinary
+button label or heading), or ordering when order is observable. "Looks like implementation", "static", and "slow" are not reasons
 to delete on their own. If a test you would keep fails on the current code,
 treat it as a possible product bug and investigate before changing the test.
 
