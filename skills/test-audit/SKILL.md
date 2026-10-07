@@ -1,6 +1,7 @@
 ---
 name: test-audit
-description: Audit existing tests for ones that cost more than they protect (duplicated coverage, implementation-coupled assertions, tests that cannot fail, mocks that supply the answer, test-only production seams) and prune or repair them without losing any contract's only proof. Use when the user asks to audit, prune, clean up, dedupe, slim down, or sweep a test file, module, directory, or subsystem, or says the tests are bloated, brittle, or low value and wants that fixed. Not for writing a new test or reviewing a single fresh test change; the test-gate skill covers those.
+description: Audit existing tests for ones that cost more than they protect (duplicated coverage, implementation-coupled assertions, tests that cannot fail, mocks that supply the answer, test-only production seams) and prune or repair them without losing any contract's only proof. Use when the user asks to audit, prune, clean up, dedupe, slim down, or sweep a test file, module, directory, or subsystem, or says the tests are bloated, brittle, or low value and wants that fixed. Not for writing a new test or reviewing a single fresh test change; the test-gate skill covers those. Pass `copy` to audit only for tests coupled to UI wording, and also use that mode when the user says tests break whenever copy or labels change.
+argument-hint: "[copy] [path]"
 ---
 
 # Test Audit
@@ -31,6 +32,8 @@ boundary. Junk includes:
 - expected values produced by the code under test;
 - copied inventories of constants or fixtures;
 - source-text greps;
+- assertions on exact UI copy (labels, headings, messages) when the behavior
+  is what matters;
 - mocks that return the value being asserted;
 - duplicated scenarios;
 - negative cases that pass for the wrong reason;
@@ -41,6 +44,11 @@ Verdicts are keep, fix, merge, or drop.
 **Scale.** The default is a focused audit of one file, module, or directory.
 For a whole subsystem's test surface in one change, read
 `references/campaign.md` first and follow it instead.
+
+**Focus.** If invoked with the argument `copy` (`/test-audit copy [path]`), or
+the user asks only about tests that break when wording changes, audit for that
+one pattern: read `references/copy-coupling.md` and follow it instead of the
+general discovery below. The rest of the argument is the scope.
 
 **Audit versus cleanup.** If the user asked for an audit or a report, stop
 after the ledger (section 3) and let them choose. If they asked you to clean up
@@ -83,6 +91,9 @@ Hunt for the test-gate junk patterns, plus what only shows up across a suite:
   more than the input exercises.
 - **Mock drift**: a mock whose shape or behavior no longer matches the real
   dependency, so the test passes against something that does not exist.
+- **Copy-coupled assertions**: tests that fail when only the wording of a
+  label, heading, or message changes. Prove it by rewording the string and
+  rerunning, as in `references/copy-coupling.md` section 3.
 
 For a large scope, split discovery into areas along production boundaries and
 give each to a read-only subagent that returns ledger rows; merge and check the
@@ -90,7 +101,8 @@ rows yourself.
 
 Beware false positives. A test that restates a list or a string can still be
 the only proof of a contract: user-visible order, a wire format, a documented
-limit, a config default, a migration, a security rule. Before calling it junk,
+limit, a config default, a migration, a security rule, legal or localization
+copy, an error message consumers match on. Before calling it junk,
 ask what regression would slip through without it.
 
 ## 3. The ledger

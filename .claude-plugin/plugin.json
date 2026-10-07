@@ -1,7 +1,7 @@
 {
   "name": "kent-test",
   "description": "Two agent skills that keep AI-written tests honest: test-gate checks every test before it lands, test-audit prunes and repairs existing suites with mutation proof.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": {
     "name": "Giamme"
   }
