@@ -3,6 +3,17 @@
   "description": "Two agent skills that keep AI-written tests honest: test-gate checks every test before it lands, test-audit prunes and repairs existing suites with mutation proof.",
   "version": "0.2.0",
   "author": {
-    "name": "Giamme"
-  }
+    "name": "Giamme",
+    "url": "https://github.com/Giamme"
+  },
+  "homepage": "https://github.com/Giamme/kent-test",
+  "repository": "https://github.com/Giamme/kent-test",
+  "license": "MIT",
+  "keywords": [
+    "testing",
+    "test-quality",
+    "mutation-testing",
+    "code-review",
+    "tdd"
+  ]
 }

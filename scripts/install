@@ -1,0 +1,123 @@
+#!/usr/bin/env python3
+"""Install the test-gate and test-audit skills from a clone, by symlinking them into each agent's skill directory.
+
+Without a clone:
+    Claude Code:  /plugin marketplace add Giamme/kent-test, then /plugin install kent-test@kent-test
+    Most agents:  npx skills add Giamme/kent-test
+
+The links point back at this clone, so a `git pull` updates every agent. Both skills are always linked side by
+side: test-audit reads its value bar from ../test-gate/SKILL.md.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import shutil
+import sys
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parents[1]
+SKILLS = ("test-gate", "test-audit")
+PLUGIN = "kent-test"
+
+# name: (env var overriding the base, default base relative to $HOME, suffix under the base, detection dir)
+CLIENTS = {
+    "claude": ("CLAUDE_CONFIG_DIR", ".claude", ("skills",), ".claude"),
+    "codex": ("CODEX_HOME", ".codex", ("skills",), ".codex"),
+    "openclaude": ("OPENCLAUDE_HOME", ".openclaude", ("skills",), ".openclaude"),
+    "opencode": ("XDG_CONFIG_HOME", ".config", ("opencode", "skills"), ".config/opencode"),
+    "kimi": ("KIMI_CODE_HOME", ".kimi-code", ("skills",), ".kimi-code"),
+    "antigravity-cli": (None, ".gemini", ("antigravity-cli", "skills"), ".gemini/antigravity-cli"),
+    "antigravity-ide": (None, ".gemini", ("config", "skills"), ".gemini/config"),
+    "agents": (None, ".agents", ("skills",), None),  # shared ~/.agents/skills; opt-in, some agents also read it
+}
+
+
+def destination(name: str, skill: str) -> Path:
+    env, base, suffix, _ = CLIENTS[name]
+    home = Path.home()
+    root = Path(os.environ[env]) if env and os.environ.get(env) else home / base
+    return root.joinpath(*suffix) / skill
+
+
+def claude_plugin_installed() -> bool:
+    env = os.environ.get("CLAUDE_CONFIG_DIR")
+    registry = (Path(env) if env else Path.home() / ".claude") / "plugins" / "installed_plugins.json"
+    try:
+        plugins = json.loads(registry.read_text(encoding="utf-8")).get("plugins", {})
+    except (OSError, ValueError, AttributeError):
+        return False
+    return any(key.split("@")[0] == PLUGIN for key in plugins)
+
+
+def detected() -> list:
+    home = Path.home()
+    names = []
+    for name, (env, _, _, probe) in CLIENTS.items():
+        if name == "claude" and claude_plugin_installed():
+            continue
+        if (env and os.environ.get(env) and name != "opencode") or (probe and (home / probe).is_dir()):
+            names.append(name)
+    return names
+
+
+def ours(path: Path, target: Path) -> bool:
+    return path.is_symlink() and Path(os.readlink(path)).resolve() == target.resolve()
+
+
+def link(path: Path, target: Path, dry_run: bool, force: bool) -> str:
+    if ours(path, target):
+        return f"ok        {path}"
+    if path.exists() or path.is_symlink():
+        if not force:
+            return f"conflict  {path} exists and is not ours (use --force to replace)"
+        if not dry_run:
+            shutil.rmtree(path) if path.is_dir() and not path.is_symlink() else path.unlink()
+    if not dry_run:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.symlink_to(target)
+    return f"{'would link' if dry_run else 'linked':<9} {path} -> {target}"
+
+
+def unlink(path: Path, target: Path, dry_run: bool) -> str:
+    if not ours(path, target):
+        return f"skip      {path} (not installed by this repo)"
+    if not dry_run:
+        path.unlink()
+    return f"{'would remove' if dry_run else 'removed':<9} {path}"
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--client", action="append", choices=[*CLIENTS, "all"],
+                        help="agent to install for (repeatable; default: every detected agent)")
+    parser.add_argument("--uninstall", action="store_true")
+    parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--force", action="store_true", help="replace an existing non-symlink install")
+    args = parser.parse_args()
+
+    names = list(CLIENTS) if args.client and "all" in args.client else (args.client or detected())
+    lines = []
+    if not args.client and "claude" in names and "opencode" in names:
+        names.remove("opencode")  # OpenCode also reads ~/.claude/skills; a second link would list each skill twice
+        lines.append(f"{'opencode':<16}skip      reads the Claude Code links (force with --client opencode)")
+    for name in names:
+        for skill in SKILLS:
+            path, target = destination(name, skill), REPO / "skills" / skill
+            lines.append(f"{name:<16}" + (unlink(path, target, args.dry_run) if args.uninstall
+                                           else link(path, target, args.dry_run, args.force)))
+
+    if not args.uninstall and "claude" in names and claude_plugin_installed():
+        lines.append("warning: the kent-test plugin is installed in Claude Code; with these links it would list each "
+                     "skill twice. Remove the links (--uninstall --client claude) or the plugin.")
+    elif not args.uninstall and "claude" not in names and not claude_plugin_installed():
+        lines += ["", "Claude Code: link the skills with --client claude, or install the plugin:",
+                  "  /plugin marketplace add Giamme/kent-test", "  /plugin install kent-test@kent-test"]
+    print("\n".join(lines) if lines else "no agents detected; pick one with --client")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

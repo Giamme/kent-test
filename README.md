@@ -58,44 +58,64 @@ the test that keeps covering the behavior if it goes. Its rules:
 
 ## Install
 
-Keep the two folders side by side: test-audit reads its value bar from
+Keep the two skills side by side: test-audit reads its value bar from
 `../test-gate/SKILL.md`. It still works alone, using a short built-in
-fallback.
+fallback. Every method below installs both.
 
-**Claude Code (as a plugin):**
+### Claude Code
+
+As a plugin:
 
 ```
 /plugin marketplace add Giamme/kent-test
 /plugin install kent-test@kent-test
 ```
 
+From a shell: `claude plugin marketplace add Giamme/kent-test && claude plugin install kent-test@kent-test`.
+
 The skills then appear as `kent-test:test-gate` and `kent-test:test-audit`.
 
-**Claude Code (manually):**
+### Codex
+
+Codex reads the same plugin:
 
 ```sh
-git clone https://github.com/Giamme/kent-test.git
-cp -R kent-test/skills/test-gate kent-test/skills/test-audit ~/.claude/skills/
+codex plugin marketplace add Giamme/kent-test
+codex plugin add kent-test@kent-test
 ```
 
-**Codex:**
+### GitHub Copilot CLI
 
 ```sh
-cp -R kent-test/skills/test-gate kent-test/skills/test-audit ~/.codex/skills/
+copilot plugin marketplace add Giamme/kent-test
+copilot plugin install kent-test@kent-test
 ```
 
-**OpenClaude:**
+### Cursor, Gemini CLI, Antigravity, OpenCode, OpenClaude, Windsurf/Devin, Amp, Kiro and others
+
+Install the skills with [`npx skills`](https://github.com/vercel-labs/skills),
+which knows where each agent looks:
 
 ```sh
-openclaude skills install ./kent-test/skills/test-gate
-openclaude skills install ./kent-test/skills/test-audit
+npx skills add Giamme/kent-test            # pick agents interactively
+npx skills add Giamme/kent-test -g -a cursor -a gemini-cli -a opencode -y
 ```
 
-**Other assistants that read `SKILL.md` folders:** copy both folders into
-that assistant's skills directory.
+### From a clone
 
-To stay up to date, symlink the folders instead of copying them, then run
-`git pull` in the clone.
+To track `main` and update every agent with a `git pull`, clone the repo and
+symlink both skills into each agent that's installed:
+
+```sh
+git clone https://github.com/Giamme/kent-test ~/src/kent-test
+~/src/kent-test/scripts/install --dry-run   # see what would be linked
+~/src/kent-test/scripts/install             # every detected agent; or --client claude --client codex
+~/src/kent-test/scripts/install --uninstall
+```
+
+Install the skills in one place per agent. With the Claude Code plugin
+installed, don't also link them into `~/.claude/skills`, or Claude Code lists
+each skill twice; the script skips Claude Code when it finds the plugin.
 
 ## How well it works
 
