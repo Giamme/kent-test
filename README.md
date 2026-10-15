@@ -117,6 +117,14 @@ Install the skills in one place per agent. With the Claude Code plugin
 installed, don't also link them into `~/.claude/skills`, or Claude Code lists
 each skill twice; the script skips Claude Code when it finds the plugin.
 
+## What it runs
+
+The plugin is instructions only: two `SKILL.md` files and their references.
+It has no hooks, scripts, dependencies or network access. The skills have your
+agent run the repo's own test commands. During an audit, the agent breaks
+production code on purpose to prove a test catches it, then restores it.
+Report-only audits run those experiments in a throwaway git worktree.
+
 ## How well it works
 
 We evaluated both skills on a private production codebase (a Rust and
