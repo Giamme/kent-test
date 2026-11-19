@@ -48,9 +48,10 @@ assertions to carry into keepers, and the test-only seams unlocked.
 Edit lane by lane. Route changes to shared harnesses and support files through
 one owner so lanes do not collide. With each lane, remove the test-only seams
 it unlocks. Register moved suites wherever the repo lists tests (CI routing,
-inventories). If the user wants durable rules, add test-ownership notes to the
-subsystem's `CLAUDE.md` or `AGENTS.md`, drawn from mistakes the campaign
-actually found.
+inventories). Keep every move within the repo's test conventions record
+(`../../test-gate/references/conventions.md`). If the user wants durable rules,
+propose additions to that record, or test-ownership notes in the subsystem's
+`CLAUDE.md` or `AGENTS.md`, drawn from mistakes the campaign actually found.
 
 Done when every lane plan is applied and each lane's keepers pass.
 

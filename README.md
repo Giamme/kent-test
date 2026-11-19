@@ -11,12 +11,39 @@ suite that already has the problem.
 
 | Skill | When it runs | What it does |
 |---|---|---|
-| **test-gate** | Automatically, whenever the assistant writes, changes, or reviews tests | Decides whether a test should exist, where it belongs, and makes regression tests prove they fail on the old code |
+| **test-gate** | Automatically, whenever the assistant writes, changes, or reviews tests | Decides whether a test should exist, where it belongs, and makes regression tests prove they fail on the old code. The first time it runs in a repo, it agrees the team's test conventions with you |
 | **test-audit** | When you ask for an audit, cleanup, or pruning of existing tests | Finds tests that cost more than they protect, and repairs or removes them. Every removal is backed by breaking the code on purpose and showing another test still catches it |
 
 Both skills are plain `SKILL.md` folders, so any assistant that reads Agent
 Skills can use them. They work in any language or repo: instead of assuming a
 test runner, they tell the assistant to find the repo's own test commands.
+
+## The team's conventions come first
+
+A good test in the wrong place still gets rejected in review. Teams decide
+where tests live (next to the source, in `__tests__/`, or in a `tests/` tree),
+what they are called, which helpers and mocks they share, and which kinds of
+test go where. Most of that is never written down.
+
+So the first time either skill runs in a repo, before it writes or moves a
+test, the assistant:
+
+1. **Surveys** how the repo tests. It reads the written rules, counts test
+   files per layout and per package, reads the runner and CI globs, looks at
+   where tests were added recently, and reads a few recent tests of each kind.
+2. **Agrees the conventions with you.** It shows a short draft, each line with
+   its evidence. It then asks only about what the repo leaves open: places
+   where the repo does the same thing two ways, kinds of test that don't exist
+   yet, and team rules that aren't written down anywhere.
+3. **Saves the record** where you choose. One option is a `## Test
+   conventions` section in the repo's `AGENTS.md` or `CLAUDE.md`, left
+   uncommitted for you to put in a PR so colleagues can review it. The other
+   is a file inside `.git` that never leaves your clone.
+
+Later sessions read the record instead of asking again. The record decides
+where a test goes and how it is written; test-gate still decides whether it
+should exist at all. When the two disagree, the assistant asks you rather than
+breaking the convention. To redo the conventions, run `/test-gate conventions`.
 
 ## What the skills check
 
@@ -121,7 +148,9 @@ each skill twice; the script skips Claude Code when it finds the plugin.
 
 The plugin is instructions only: two `SKILL.md` files and their references.
 It has no hooks, scripts, dependencies or network access. The skills have your
-agent run the repo's own test commands. During an audit, the agent breaks
+agent run the repo's own test commands. The only file they add is the test
+conventions record, written where you choose and never committed by the
+agent. During an audit, the agent breaks
 production code on purpose to prove a test catches it, then restores it.
 Report-only audits run those experiments in a throwaway git worktree.
 

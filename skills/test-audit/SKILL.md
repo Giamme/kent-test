@@ -39,7 +39,10 @@ boundary. Junk includes:
 - negative cases that pass for the wrong reason;
 - names that promise more than the input exercises.
 
-Verdicts are keep, fix, merge, or drop.
+Verdicts are keep, fix, merge, or drop. Without test-gate there is no
+conventions procedure either: before moving or merging any test, find where
+the repo's tests of that kind live and what they are called, and ask the
+developer wherever the repo does it more than one way.
 
 **Scale.** The default is a focused audit of one file, module, or directory.
 For a whole subsystem's test surface in one change, read
@@ -60,6 +63,11 @@ Before judging any test:
 
 - Learn how the repo runs tests (test-gate section 1): docs, manifests, the
   narrowest command for the scope.
+- Load the repo's test conventions record, or create it with the developer if
+  there is none (`../test-gate/references/conventions.md`). A report-only audit
+  only needs the survey (sections 1 and 2 of that file), but run the whole
+  procedure before the first edit. The record sets where kept, moved, and
+  merged tests may live.
 - Run the in-scope tests and record the commit, the pass/fail state, and the
   line counts of test code, test support code, and production code separately.
 - A test that fails on the baseline is not a stale test to delete. Treat it as
@@ -162,7 +170,9 @@ instead of the user's checkout.
   were tests) instead of leaving compatibility aliases. Fewer production lines
   is the goal.
 - Move a retained regression test to the test file of the module that owns the
-  behavior, and fold near-duplicates into one table.
+  behavior, and fold near-duplicates into one table, both within the layout and
+  naming the conventions record sets. If the right home breaks the record, ask
+  instead of moving.
 - Repair a fix-verdict test so it fails for the intended reason (test-gate
   section 3), rather than deleting it.
 - Do not add replacement tests that restate the implementation, and do not turn
@@ -186,6 +196,7 @@ instead of the user's checkout.
 - the mutation proofs for each drop and merge;
 - production seams removed;
 - tests that looked like junk but were kept, and the contract each guards;
+- tests moved or renamed, and the conventions that decided where;
 - commands run and results;
 - line counts before and after, production and tests separately;
 - follow-ups: product bugs found, the next area worth auditing.

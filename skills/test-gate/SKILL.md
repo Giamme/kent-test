@@ -1,6 +1,7 @@
 ---
 name: test-gate
-description: Quality gate for writing, changing, or reviewing tests. Use it whenever you are about to add or modify a test, write a regression test for a bug fix, answer a request for "more coverage" or "tests for X", or review test changes before they are committed, even when the user never mentions test quality. It decides whether a test should exist at all, where it belongs, and how to prove it catches the failure it claims to catch.
+description: Quality gate for writing, changing, or reviewing tests. Use it whenever you are about to add or modify a test, write a regression test for a bug fix, answer a request for "more coverage" or "tests for X", or review test changes before they are committed, even when the user never mentions test quality. It decides whether a test should exist at all, where it belongs, and how to prove it catches the failure it claims to catch. The first time it runs in a repo, it surveys how the team writes and organizes tests and agrees the conventions with the developer before writing any. Pass `conventions`, or use it when the user wants to set up, review, or update the repo's test conventions.
+argument-hint: "[conventions]"
 ---
 
 # Test Gate
@@ -14,14 +15,23 @@ before a test lands.
 
 Apply it in proportion. Adding one row to a well-shaped table test is a
 ten-second thought. A new test file, a regression test, or a review of someone's
-tests deserves the full pass.
+tests deserves the full pass. The conventions check in section 1 is the
+exception: it runs once per repo, whatever the size of the task.
 
 ## 1. Learn how this repo tests
 
-Before writing anything:
+A test the team would put somewhere else, or write some other way, gets
+rejected in review however good its assertions are. Before writing anything:
 
+- **Conventions.** Look for the repo's agreed test conventions, a record marked
+  `<!-- kent-test:conventions -->` (`references/conventions.md` section 1
+  says where to look). If there is none, or the user invoked
+  `/test-gate conventions`, follow `references/conventions.md`: survey how the
+  team tests, agree the conventions with the developer, and save them. Do this
+  before writing or moving any test. If there is a record, follow it (section 5
+  of that file): it decides where tests go and how they are written.
 - Read the root and nearby `CLAUDE.md`, `AGENTS.md`, or contributing docs for
-  test conventions and commands.
+  test commands.
 - Check the manifests: `package.json` scripts and workspaces, the `Cargo.toml`
   workspace, `pyproject.toml`, a `Makefile`, and so on.
 - Read the existing tests closest to the code: their helpers, fixtures, naming,
@@ -114,7 +124,8 @@ unless the test independently guards a real contract (see section 6).
 - Negative cases: one known-valid fixture, one mutation per case, plus the
   positive control. Test limits at the edge: accepted at the maximum, rejected
   one past it.
-- Match the surrounding tests' helpers, style, and density.
+- Put the test where the conventions record says, and use its naming and
+  shared helpers. Within that, match the surrounding tests' style and density.
 - Run the narrowest command and confirm the new tests pass.
 
 ## 5. Regression tests must fail first
@@ -149,7 +160,9 @@ reason:
 - **merge**: fold it into an existing test or table, and say which;
 - **drop**: name the existing proof that remains, or why no contract exists.
 
-Judge a test by its assertions, not its name.
+Judge a test by its assertions, not its name. A test in the wrong place, or
+named or built against the repo's conventions record, gets **fix**, with where
+it belongs.
 
 Do not over-prune. Keep tests that independently guard a public API, protocol
 or wire format, persistence or migration, security, config defaults, documented
@@ -164,6 +177,8 @@ treat it as a possible product bug and investigate before changing the test.
 Finish with a short account:
 
 - each test added or changed: what it protects and the regression it catches;
+- where it went and which conventions decided that, plus any deviation from
+  the record and why;
 - for regression tests, the observed pre-fix failure;
 - tests you considered and did not add (or dropped), with the coverage that
   makes them unnecessary;
